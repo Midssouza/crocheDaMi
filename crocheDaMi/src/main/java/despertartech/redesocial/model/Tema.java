@@ -1,68 +1,59 @@
 package despertartech.redesocial.model;
-
 import java.util.List;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import despertartech.redesocial.model.Postagem;
+import despertartech.redesocial.repository.PostagemRepository;
 
-
-@Entity
-@Table(name = "tb_tema")
+@RestController
+@RequestMapping("/postagens")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class Tema {
-
-	@Id	
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long id;
 	
-	@NotNull
-	private String descricao;
+	@Autowired
+	private PostagemRepository repositoty;
 	
-	private long qtd;
-	
-	@OneToMany(mappedBy = "tema", cascade = CascadeType.REMOVE)
-	@JsonIgnoreProperties("tema")
-	private List<Postagem> postagem;
-	
-	
-
-	public long getQtd() {
-		return qtd;
+	@GetMapping
+	public ResponseEntity<List<Postagem>> GetAll(){
+		return ResponseEntity.ok(repositoty.findAll());
 	}
 
-	public void setQtd(long qtd) {
-		this.qtd = qtd;
-	}
-
-	public long getId() {
-		return id;
-	}
-
-	public void setId(long id) {
-		this.id = id;
-	}
-
-	public String getDescricao() {
-		return descricao;
-	}
-
-	public void setDescricao(String descricao) {
-		this.descricao = descricao;
-	}
-
-	public List<Postagem> getPostagem() {
-		return postagem;
-	}
-
-	public void setPostagem(List<Postagem> postagem) {
-		this.postagem = postagem;
+	@GetMapping("/{id}")
+	public ResponseEntity<Postagem> GetById(@PathVariable long id){
+		return repositoty.findById(id)
+				.map(resp -> ResponseEntity.ok(resp))
+				.orElse(ResponseEntity.notFound().build());
 	}
 	
+	@GetMapping("/titulo/{titulo}")
+	public ResponseEntity<List<Postagem>> GetByTitulo(@PathVariable String titulo){
+		return ResponseEntity.ok(repositoty.findAllByTituloContainingIgnoreCase(titulo));
+	}
+	
+	@PostMapping
+	public ResponseEntity<Postagem> post (@RequestBody Postagem postagem){
+		return ResponseEntity.status(HttpStatus.CREATED).body(repositoty.save(postagem));
+	}
+	
+	@PutMapping
+	public ResponseEntity<Postagem> put (@RequestBody Postagem postagem){
+		return ResponseEntity.status(HttpStatus.OK).body(repositoty.save(postagem));
+	}
+	
+	@DeleteMapping("/{id}")
+	public void delete(@PathVariable long id) {
+		repositoty.deleteById(id);
+	}	
 }
